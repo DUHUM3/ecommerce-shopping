@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% block title %}
+الدفع
+{% endblock title %} 
+{% block content %}
+
+<h1> Welcome to Duhum Sale </h1>
+
+{% endblock content %} 
+{% block body %} 
+{% load static %}
+
+<!-- ======= قسم السلة ======= -->
+<section id="portfolio" class="portfolio">
+  <div class="container">
+    {% for message in messages %}
+    <div
+      class="alert alert-{{ message.tags }} alert-dismissible fade show"
+      role="alert"
+    >
+      <strong>{{ message }}</strong>
+      <button
+        type="button"
+        class="btn-close"
+        data-bs-dismiss="alert"
+        aria-label="إغلاق"
+      ></button>
+    </div>
+    {% endfor %}
+
+    <div class="section-title">
+      <h2>Welcome to Shop</h2>
+      <h3>صفحة الدفع</h3>
+    </div>
+
+    <div class="container">
+      <div class="col my-4">
+        <h2>الخطوة 1 - مراجعة عناصر سلة التسوق السريعة</h2>
+        <div class="my-4">
+          <ul class="list-group" id="items">
+          </ul>
+       
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mt-3">
+              <li class="breadcrumb-item active" aria-current="page">إجمالي سلتك هو <b>Rs. <span id="totalprice"></span> <span id="amount"></span></b>. أدخل تفاصيلك أدناه وقم بعمل الطلب. شكرًا لاستخدامك سلة التسوق</li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+      <div class="col my-4">
+        <h2>الخطوة 2 - أدخل العنوان والتفاصيل الأخرى:</h2>
+        <form method="post" action="/checkout/">{% csrf_token %}
+          <input type="hidden" name="itemsJson" id="itemsJson">
+          <input type="hidden" id="amt" name="amt">
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="inputname">الاسم</label>
+              <input type="text" class="form-control mt-3" id="name" name="name" placeholder="الاسم" required>
+            </div>
+            <div class="form-group col-md-6">
+              <label for="inputEmail4">البريد الإلكتروني</label>
+              <input type="email" class="form-control mt-3" id="email" name="email" placeholder="البريد الإلكتروني" value="{{ user.email }}" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="inputAddress">العنوان</label>
+              <input type="text" class="form-control mt-3" id="address1" name="address1" placeholder="1234 الشارع الرئيسي" required>
+            </div>
+            <div class="form-group col-md-6">
+              <label for="inputAddress">العنوان 2</label>
+              <input type="text" class="form-control mt-3" id="address2" name="address2" placeholder="1234 الشارع الرئيسي" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="inputCity">المدينة</label>
+              <input type="text" class="form-control mt-3" id="city" name="city" required>
+            </div>
+            <div class="form-group col-md-6">
+              <label for="inputState">البلد</label>
+              <input type="text" class="form-control mt-3" id="state" name="state" placeholder="أدخل البلد" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="inputZip">الرمز</label>
+              <input type="number" class="form-control mt-3" id="zip_code" name="zip_code" required>
+            </div>
+            <div class="form-group col-md-6">
+              <label for="inputZip">رقم الهاتف</label>
+              <input type="number" class="form-control mt-3" id="phone" name="phone" required>
+            </div>
+          </div>
+          <button id="btn" type="submit" class="btn btn-success btn-sm btn-block col-md-4 mt-3">تقديم الطلب</button>
+        </form>
+      </div>
+   
+      <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+      <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+
+      <script>
+        if (localStorage.getItem('cart') == null) {
+          var cart = {};
+        } else {
+          cart = JSON.parse(localStorage.getItem('cart'));
+        }
+        console.log(cart);
+
+        var sum = 0;
+        var totalPrice = 0;
+        if ($.isEmptyObject(cart)) {
+          // إذا كانت السلة فارغة
+          mystr = `<p>سلتك فارغة، يرجى إضافة بعض العناصر إلى سلتك قبل الدفع!</p>`;
+          $('#items').append(mystr);
+        } else {
+          for (item in cart) {
+            let name = cart[item][1];
+            let qty = cart[item][0];
+            let itemPrice = cart[item][2];
+            sum += qty;
+            totalPrice += qty * itemPrice;
+           
+            mystr = `<li class="list-group-item d-flex justify-content-between align-items-center">
+                       ${name}
+                       <div><b> السعر : ${itemPrice}</b></div>
+                       <span class="badge badge-primary badge-pill">${qty}</span>
+                   </li>`;
+            $('#items').append(mystr);
+          }
+          document.getElementById('totalprice').innerHTML = totalPrice;
+        }
+
+        $('#itemsJson').val(JSON.stringify(cart));
+
+        {% if thank %}
+        alert('شكرًا لطلبك منا. رقم طلبك هو {{ id }}. استخدمه لتتبع طلبك باستخدام متتبع الطلبات لدينا');
+        localStorage.clear();
+        document.location = "/";
+        {% endif %}
+
+        document.getElementById("amt").value = totalPrice;
+      </script>
+
+{% endblock body %}
